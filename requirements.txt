@@ -1,0 +1,3 @@
+requests
+PyPDF2
+bs4
