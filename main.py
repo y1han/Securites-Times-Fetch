@@ -3,9 +3,9 @@ import re
 import json
 import zipfile
 import datetime
-import warnings
 from bs4 import BeautifulSoup
 import requests
+from requests.adapters import HTTPAdapter
 from PyPDF2 import PdfFileMerger
 
 header = {
@@ -25,14 +25,23 @@ class Day:
     MONTH = str(NOW.month).zfill(2)
     DAY = str(NOW.day).zfill(2)
     DATE = ''.join([YEAR, MONTH, DAY])
+    print(DATE)
 
     DIR = os.path.join('Download', DATE)
     PAGES_FILE_PATH = os.path.join(DIR, f'证券时报{DATE}.zip')
     MERGED_FILE_PATH = os.path.join(DIR, f'证券时报{DATE}.pdf')
 
     HOME_URL = f'http://epaper.stcn.com/paper/zqsb/html/{YEAR}-{MONTH}/{DAY}/node_2.htm'
+    print(HOME_URL)
 
-    HOME_CONTENT = requests.get(HOME_URL)
+    s = requests.Session()
+    s.mount("http://", HTTPAdapter(max_retries=3))
+    HOME_CONTENT = s.get(HOME_URL)
+    print(HOME_CONTENT.status_code)
+    if (HOME_CONTENT.status_code != requests.codes.ok):
+        print("Stopped: Status 404")
+        raise SystemExit(1)
+
     if HOME_CONTENT.encoding == 'ISO-8859-1':
         encodings = requests.utils.get_encodings_from_content(HOME_CONTENT.text)
         if encodings:
@@ -53,8 +62,8 @@ class Day:
         print(PAGE_LIST)
 
     if (PAGE_LIST == []):
-        print("Stopped")
-        raise SystemExit(0)
+        print("Stopped: No Page")
+        raise SystemExit(1)
         
     PAGE_NAME_LIST = re.findall('版<i>(.*?)</i>', HOME_CONTENT)
     TOTAL_COUNT = int(re.findall(r'\d+',PAGE_NAME_LIST[0])[0])
@@ -119,7 +128,6 @@ class Page:
 
 
 def main():
-    warnings.filterwarnings('ignore')
     pages = [Page(Day.HOME_CONTENT, Day.ADJ_PAGE_NAME_LIST[idx], Day.PAGES_CONTENT[idx], page_str) for idx, page_str in enumerate(Day.ADJ_PAGE_LIST)]
     pages_file = zipfile.ZipFile(Day.PAGES_FILE_PATH, 'w')
     merged_file = PdfFileMerger(False)
@@ -134,6 +142,7 @@ def main():
         )
     }
     
+    print("Start Processing!")
     # Process
     for page in pages:
         # Save pdf
