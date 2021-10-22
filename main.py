@@ -158,6 +158,7 @@ def main():
         "page_count": str(Day.PAGE_COUNT),
         "pages_file_path": Day.PAGES_FILE_PATH,
         "merged_file_path": Day.MERGED_FILE_PATH,
+        "ebook_file_path": Day.EBOOK_FILE_PATH,
         "release_body": (
             f"# [{Day.DATE}]({Day.HOME_URL})" f"\n\n今日 {Day.TOTAL_COUNT} 版"
         ),
