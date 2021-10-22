@@ -242,7 +242,20 @@ def main():
                         img_filename,
                     )
                 )
-                urlretrieve(img_absolute_url, img_path)
+
+                retry_count = 10
+                current_retry = 0
+                available = False
+
+                while not available:
+                    try:
+                        urlretrieve(img_absolute_url, img_path)
+                        available = True
+                    except Exception as e:
+                        current_retry += 1
+                    if current_retry > retry_count:
+                        break
+
                 with open(img_path, "rb") as f:
                     ebook_image = epub.EpubItem(
                         file_name=f"images/{img_filename}",
