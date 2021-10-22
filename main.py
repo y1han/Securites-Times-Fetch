@@ -223,6 +223,8 @@ def main():
             soup = BeautifulSoup(response.content, "html.parser")
             content = soup.select_one("div.tc_con")
 
+            for div in content.find_all("p", {"class": "pic"}):
+                div.decompose()
             for div in content.find_all("div", {"class": "tc_news_tit"}):
                 div.decompose()
             for div in content.find_all("ul", {"class": "tc_news_list"}):
