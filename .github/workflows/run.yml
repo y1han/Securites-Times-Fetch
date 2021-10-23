@@ -2,7 +2,7 @@ name: Run
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 23 * * *'
+    - cron: "0 23 * * *"
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -52,6 +52,13 @@ jobs:
           path: data.json
           property: merged_file_path
 
+      - name: Read Ebook File Path Data
+        id: read_ebook_file_path_data
+        uses: ashley-taylor/read-json-property-action@v1.0
+        with:
+          path: data.json
+          property: ebook_file_path
+
       - name: Read Release Body Data
         id: read_release_body_data
         uses: ashley-taylor/read-json-property-action@v1.0
@@ -79,7 +86,7 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ steps.read_pages_file_path_data.outputs.value }}
           asset_name: ${{ steps.read_date_data.outputs.value }}.zip
-          asset_content_type: application/pdf
+          asset_content_type: application/zip
 
       - name: Upload Release Asset Merged File
         uses: actions/upload-release-asset@v1
@@ -90,3 +97,13 @@ jobs:
           asset_path: ${{ steps.read_merged_file_path_data.outputs.value }}
           asset_name: ${{ steps.read_date_data.outputs.value }}.pdf
           asset_content_type: application/pdf
+
+      - name: Upload Release Asset Ebook File
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.read_ebook_file_path_data.outputs.value }}
+          asset_name: ${{ steps.read_date_data.outputs.value }}.epub
+          asset_content_type: application/epub+zip

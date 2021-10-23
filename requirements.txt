@@ -1,3 +1,4 @@
 requests
 PyPDF2
 bs4
+ebooklib
