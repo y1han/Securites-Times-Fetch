@@ -5,7 +5,7 @@ import re
 import zipfile
 from urllib.parse import urljoin
 from urllib.request import urlretrieve
-
+from urllib3.util.retry import Retry
 import requests
 from bs4 import BeautifulSoup
 from ebooklib import epub
@@ -13,11 +13,10 @@ from PyPDF2 import PdfFileMerger
 from requests.adapters import HTTPAdapter
 
 header = {
-    "User-Agent": "PostmanRuntime/7.20.1",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Safari/605.1.15",
     "Accept": "*/*",
     "Cache-Control": "no-cache",
-    "Postman-Token": "8eb5df70-4da6-4ba1-a9dd-e68880316cd9,30ac79fa-969b-4a24-8035-26ad1a2650e1",
-    "Host": "medianet.edmond-de-rothschild.fr",
+    "Host": "epaper.stcn.com",
     "Accept-Encoding": "gzip, deflate",
     "Connection": "keep-alive",
     "cache-control": "no-cache",
@@ -42,7 +41,10 @@ class Day:
     print(HOME_URL)
 
     s = requests.Session()
-    s.mount("http://", HTTPAdapter(max_retries=3))
+    retries = Retry(total=5,
+                backoff_factor=0.1,
+                status_forcelist=[ 500, 502, 503, 504 ])
+    s.mount("http://", HTTPAdapter(max_retries=retries))
     HOME_CONTENT = s.get(HOME_URL)
     print(HOME_CONTENT.status_code)
     if HOME_CONTENT.status_code != requests.codes.ok:
