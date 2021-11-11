@@ -22,6 +22,13 @@ header = {
     "cache-control": "no-cache",
 }
 
+def requestContent(url):
+    s = requests.Session()
+    retries = Retry(total=5,
+                backoff_factor=0.1,
+                status_forcelist=[ 500, 502, 503, 504 ])
+    s.mount("http://", HTTPAdapter(max_retries=retries))
+    return s.get(url, headers=header)
 
 class Day:
     NOW = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
@@ -40,12 +47,7 @@ class Day:
     HOME_URL = f"http://epaper.stcn.com/paper/zqsb/html/{YEAR}-{MONTH}/{DAY}/node_2.htm"
     print(HOME_URL)
 
-    s = requests.Session()
-    retries = Retry(total=5,
-                backoff_factor=0.1,
-                status_forcelist=[ 500, 502, 503, 504 ])
-    s.mount("http://", HTTPAdapter(max_retries=retries))
-    HOME_CONTENT = s.get(HOME_URL)
+    HOME_CONTENT = requestContent(HOME_URL)
     print(HOME_CONTENT.status_code)
     if HOME_CONTENT.status_code != requests.codes.ok:
         print("Stopped: Status 404")
@@ -106,13 +108,12 @@ class Page:
         self.html_url = f"http://epaper.stcn.com/paper/zqsb/html/{Day.YEAR}-{Day.MONTH}/{Day.DAY}/node_2.htm"
         self.html = HOME_CONTENT
         self.page_content = page_content
-        self.pdf = requests.get(
+        self.pdf = requestContent(
             (
                 "http://epaper.stcn.com/paper/zqsb/page/1/{0}-{1}/{2}/{3}/{0}{1}{2}{3}_pdf.pdf".format(
                     Day.YEAR, Day.MONTH, Day.DAY, page
                 )
-            ),
-            header,
+            )
         ).content
         self.path = os.path.join(Day.DIR, f"{self.page}.pdf")
 
@@ -221,7 +222,7 @@ def main():
         for article in page.articles:
             data["release_body"] += f"\n- [{article[1]}]({article[0]})"
 
-            response = requests.get(article[0])
+            response = requestContent(article[0])
             soup = BeautifulSoup(response.content, "html.parser")
             content = soup.select_one("div.tc_con")
 
